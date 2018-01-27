@@ -34,6 +34,14 @@ class Promoter {
         return this._prepare(head, 0); // index --> Logging purposes
     }
 
+    _shouldNotProcessNext(index) {
+        if (this.shouldPromoteAllUnconfirmed) {
+            return !this.bundles.length || index === this.bundles.length - 1;
+        }
+
+        return !this.failed.length || index === this.failed.length - 1;
+    }
+
     _getFirstConsistentTail(tails, idx) {
         if (!tails[idx]) {
             return Promise.resolve(false);
@@ -53,8 +61,9 @@ class Promoter {
     }
 
     _processNext(index) {
-        const isLast = index === (this.shouldPromoteAllUnconfirmed ? this.bundles.length - 1 : this.failed.length - 1);
-        if (isLast) {
+        let shouldNotProcessNext = this._shouldNotProcessNext(index);
+
+        if (shouldNotProcessNext) {
             console.info('Processed last bundle. Will update local');
             updateAtPath(config.FAILED_REATTACHS_PATH, this.failed);
             updateAtPath(config.UNCONFIMED_BUNDLES_PATH, this.bundles);
@@ -125,7 +134,7 @@ class Promoter {
                           this.bundles = this.bundles.filter(item => item !== bundle);
                           this._processNext(index);
                       } else {
-                          this._getFirstConsistentTail(tails).then(consistentTail => {
+                          this._getFirstConsistentTail(tails, 0).then(consistentTail => {
                               if (!consistentTail) {
                                   console.warn(`Could not find any consistent tail for bundle ${bundle} at index ${index}`);
                                   const tailAtHead = tails.length ? tails[0] : null;
