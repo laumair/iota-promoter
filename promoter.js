@@ -34,6 +34,30 @@ class Promoter {
         return this._prepare(head, 0); // index --> Logging purposes
     }
 
+    updateFailedBundles(bundle) {
+        // Update local copy for failed bundle hashes
+        this.failed = union(this.failed, [bundle]);
+
+        // Update file.
+        updateAtPath(config.FAILED_REATTACHS_PATH, this.failed);
+    }
+
+    updateConfirmedBundles(bundle) {
+        // Update local copy for confirmed bundle hashes
+        this.confirmed = union(this.confirmed, [bundle]);
+
+        // Write to file.
+        updateAtPath(config.CONFIRMED_PATH, this.confirmed);
+    }
+
+    filterAndUpdateUnconfirmedBundles(bundle) {
+        // Remove from unconfirmed
+        this.bundles = this.bundles.filter(item => item !== bundle);
+
+        // Write to file.
+        updateAtPath(config.UNCONFIMED_BUNDLES_PATH, this.bundles);
+    }
+
     _shouldNotProcessNext(index) {
         if (this.shouldPromoteAllUnconfirmed) {
             return !this.bundles.length || index === this.bundles.length - 1;
@@ -91,7 +115,7 @@ class Promoter {
                     this.iota.api.replayBundle(tail.hash, 3, 14, err => {
                         if (err) {
                             console.error(`Reattachment error for bundle ${bundle} at index ${index}`);
-                            this.failed = union(this.failed, [bundle]);
+                            this.updateFailedBundles(bundle);
 
                             callback(index);
                         } else {
@@ -101,7 +125,7 @@ class Promoter {
                 } else {
                     console.error(`Unknown error while promoting ${bundle} at index ${index}. Will not reattach`);
 
-                    this.failed = union(this.failed, [bundle]);
+                    this.updateFailedBundles(bundle);
                     callback(index);
                 }
             } else {
@@ -116,22 +140,25 @@ class Promoter {
         return this.iota.api.findTransactionObjects({ bundles: [bundle] }, (err, txs) => {
            if (err) {
                console.error(`Error fetching transaction objects for bundle ${bundle} at index ${index}`);
-               this.failed = union(this.failed, [bundle]);
+
+               this.updateFailedBundles(bundle);
                this._processNext(index);
            } else {
                const tails = txs.filter(tx => tx.currentIndex === 0);
+
                this.iota.api.getLatestInclusion(tails.map(t => t.hash), (err, states) => {
                   if (err) {
                       console.error(`Error fetching inclusion states for bundle ${bundle} at index ${index}`);
-                      this.failed = union(this.failed, [bundle]);
+
+                      this.updateFailedBundles(bundle);
                       this._processNext(index);
                   } else {
                       if (tails.some((t, idx) => states[idx])) {
                           console.info(`Found transaction already confirmed for bundle ${bundle} at index ${index}`);
-                          this.confirmed = union(this.confirmed, [bundle]);
 
-                          // Remove from unconfirmed
-                          this.bundles = this.bundles.filter(item => item !== bundle);
+                          this.updateConfirmedBundles(bundle);
+                          this.filterAndUpdateUnconfirmedBundles(bundle);
+
                           this._processNext(index);
                       } else {
                           this._getFirstConsistentTail(tails, 0).then(consistentTail => {
@@ -147,7 +174,7 @@ class Promoter {
                                               console.error(`Reattachment error for bundle ${bundle} at index ${index}`);
                                               console.error(`Error message for reattachment failure, ${err.message}`);
 
-                                              this.failed = union(this.failed, [bundle]);
+                                              this.updateFailedBundles(bundle);
                                               this._processNext(index);
                                           } else {
                                               console.info(`Successfully make a reattachment for bundle ${bundle} at ${index}`);
@@ -156,6 +183,8 @@ class Promoter {
                                       });
                                   } else {
                                       console.error(`No tail found for bundle ${bundle} at index ${index}`);
+
+                                      this.updateFailedBundles(bundle);
                                       this._processNext(index);
                                   }
                               } else {
