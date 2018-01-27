@@ -1,6 +1,7 @@
 const IOTA = require('iota.lib.js');
 const { isAboveMaxDepth, updateAtPath, union, getProvider } = require('./helpers');
 const config = require('./config');
+const logger = require('./logger');
 
 class Promoter {
     constructor(provider, bundles, failed, confirmed, shouldPromoteAll) {
@@ -26,6 +27,8 @@ class Promoter {
         this.failed = failed || [];
         this.confirmed = confirmed || [];
         this.shouldPromoteAllUnconfirmed = shouldPromoteAll;
+
+        this._shouldNotProcessNext = this._shouldNotProcessNext.bind(this);
     }
 
     initialize() {
@@ -88,17 +91,14 @@ class Promoter {
         let shouldNotProcessNext = this._shouldNotProcessNext(index);
 
         if (shouldNotProcessNext) {
-            console.info('Processed last bundle. Will update local');
-            updateAtPath(config.FAILED_REATTACHS_PATH, this.failed);
-            updateAtPath(config.UNCONFIMED_BUNDLES_PATH, this.bundles);
-            updateAtPath(config.CONFIRMED_PATH, this.confirmed);
+            logger.info('Processed last bundle. Will quit.');
         } else {
             const nextHead = this.shouldPromoteAllUnconfirmed ? this.bundles[index + 1] : this.failed[index + 1];
 
             // Well don't want to bombard a single node
             const newProvider = getProvider(config.NODES);
             this.iota.changeNode({ provider: newProvider });
-            console.info(`About to start processing bundle with index ${index + 1}`);
+            logger.info(`About to start processing bundle with index ${index + 1}`);
             this._prepare(nextHead, index + 1);
         }
     }
@@ -106,15 +106,15 @@ class Promoter {
     _promote(bundle, index, tail, callback) {
         const spamTransfer = [{ address: 'U'.repeat(81), value: 0, message: '', tag: '' }];
 
-        console.info(`Starting promotion for bundle ${bundle} at index ${index}`);
+        logger.info(`Starting promotion for bundle ${bundle} at index ${index}`);
         this.iota.api.promoteTransaction(tail.hash, 4, 14, spamTransfer, { interrupt: false, delay: 0 }, err => {
             if (err) {
                 if (err.message.indexOf('Inconsistent subtangle') > -1) {
-                    console.error(`Failed to promote ${bundle} at index ${index}. Will reattach`);
+                    logger.error(`Failed to promote ${bundle} at index ${index}. Will reattach`);
 
                     this.iota.api.replayBundle(tail.hash, 3, 14, err => {
                         if (err) {
-                            console.error(`Reattachment error for bundle ${bundle} at index ${index}`);
+                            logger.error(`Reattachment error for bundle ${bundle} at index ${index}`);
                             this.updateFailedBundles(bundle);
 
                             callback(index);
@@ -123,7 +123,7 @@ class Promoter {
                         }
                     });
                 } else {
-                    console.error(`Unknown error while promoting ${bundle} at index ${index}. Will not reattach`);
+                    logger.error(`Unknown error while promoting ${bundle} at index ${index}. Will not reattach`);
 
                     this.updateFailedBundles(bundle);
                     callback(index);
@@ -135,11 +135,11 @@ class Promoter {
     }
 
     _prepare(bundle, index) {
-        console.info(`Fetching transaction objects for bundle ${bundle} at index ${index}`);
+        logger.info(`Fetching transaction objects for bundle ${bundle} at index ${index}`);
 
         return this.iota.api.findTransactionObjects({ bundles: [bundle] }, (err, txs) => {
            if (err) {
-               console.error(`Error fetching transaction objects for bundle ${bundle} at index ${index}`);
+               logger.error(`Error fetching transaction objects for bundle ${bundle} at index ${index}`);
 
                this.updateFailedBundles(bundle);
                this._processNext(index);
@@ -148,13 +148,13 @@ class Promoter {
 
                this.iota.api.getLatestInclusion(tails.map(t => t.hash), (err, states) => {
                   if (err) {
-                      console.error(`Error fetching inclusion states for bundle ${bundle} at index ${index}`);
+                      logger.error(`Error fetching inclusion states for bundle ${bundle} at index ${index}`);
 
                       this.updateFailedBundles(bundle);
                       this._processNext(index);
                   } else {
                       if (tails.some((t, idx) => states[idx])) {
-                          console.info(`Found transaction already confirmed for bundle ${bundle} at index ${index}`);
+                          logger.info(`Found transaction already confirmed for bundle ${bundle} at index ${index}`);
 
                           this.updateConfirmedBundles(bundle);
                           this.filterAndUpdateUnconfirmedBundles(bundle);
@@ -163,26 +163,26 @@ class Promoter {
                       } else {
                           this._getFirstConsistentTail(tails, 0).then(consistentTail => {
                               if (!consistentTail) {
-                                  console.warn(`Could not find any consistent tail for bundle ${bundle} at index ${index}`);
+                                  logger.warn(`Could not find any consistent tail for bundle ${bundle} at index ${index}`);
                                   const tailAtHead = tails.length ? tails[0] : null;
 
                                   if (tailAtHead) {
-                                      console.info(`Will replay for bundle ${bundle} at index ${index}`);
+                                      logger.info(`Will replay for bundle ${bundle} at index ${index}`);
 
                                       this.iota.api.replayBundle(tailAtHead.hash, 3, 14, err => {
                                           if (err) {
-                                              console.error(`Reattachment error for bundle ${bundle} at index ${index}`);
-                                              console.error(`Error message for reattachment failure, ${err.message}`);
+                                              logger.error(`Reattachment error for bundle ${bundle} at index ${index}`);
+                                              logger.error(`Error message for reattachment failure, ${err.message}`);
 
                                               this.updateFailedBundles(bundle);
                                               this._processNext(index);
                                           } else {
-                                              console.info(`Successfully make a reattachment for bundle ${bundle} at ${index}`);
+                                              logger.success(`Successfully make a reattachment for bundle ${bundle} at ${index}`);
                                               this._processNext(index);
                                           }
                                       });
                                   } else {
-                                      console.error(`No tail found for bundle ${bundle} at index ${index}`);
+                                      logger.error(`No tail found for bundle ${bundle} at index ${index}`);
 
                                       this.updateFailedBundles(bundle);
                                       this._processNext(index);
