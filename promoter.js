@@ -28,7 +28,7 @@ class Promoter {
         this.confirmed = confirmed || [];
         this.shouldPromoteAllUnconfirmed = shouldPromoteAll;
 
-        this._shouldNotProcessNext = this._shouldNotProcessNext.bind(this);
+        this._processNext = this._processNext.bind(this);
     }
 
     initialize() {
