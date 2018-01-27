@@ -1,4 +1,3 @@
-const fs = require('fs');
 const config = require('./config');
 const { Promoter } = require('./promoter');
 const { getProvider, setupFiles, getExistingData } = require('./helpers');
