@@ -1,5 +1,9 @@
 {
-  "author": "www.github.com/laumair",
+  "name": "iota-promoter",
+  "version": "0.0.1",
+  "description": "Promotes/Reattaches transactions from bundle hashes.",
+  "author": "Umair Sarfraz <aquadestructor@icloud.com>",
+  "license": "MIT",
   "scripts": {
     "lint": "./node_modules/.bin/eslint --ext .js ."
   },

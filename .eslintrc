@@ -1,1 +1,7 @@
-extends: airbnb-base
+{
+  "extends": "airbnb-base",
+  "root": true,
+  "rules": {
+    "arrow-parens": 0
+  }
+}
