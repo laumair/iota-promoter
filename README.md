@@ -9,7 +9,6 @@
 
 ```
 yarn
-
 ```
 
 To auto-reattach/promote all unconfirmed transactions
