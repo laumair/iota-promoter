@@ -4,6 +4,7 @@
     "lint": "./node_modules/.bin/eslint --ext .js ."
   },
   "dependencies": {
+    "chalk": "^2.3.0",
     "iota.lib.js": "^0.4.6"
   },
   "devDependencies": {

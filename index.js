@@ -54,8 +54,8 @@ const processList = promoteAll => {
             const promoter = new Promoter(
                 node,
                 bundles,
-                failed.length ? failed : null,
-                confirmed.length ? confirmed : null,
+                failed,
+                confirmed,
                 promoteAll
             );
 
