@@ -1,24 +1,17 @@
 ## Auto-promoter/reattacher
 
-- Reads from a list of bundle hashes and tries to promote associated transactions. In case it fails, reattaches them.
-- Checks for confirmed transactions and remove them from the list of unconfirmed bundle hashes.
-- Prepares a list of bundle hashes that fail to get promoted and reattached.
+Reads ZMQ feed from a full node, store all unconfirmed transactions and promotes them till they get confirmed.
 
+## Required Dependencies
+
+- [Docker](https://docs.docker.com/engine/installation/)
+- [Docker Compose](https://docs.docker.com/compose/install/)
 
 ### Getting started
 
-```
-yarn
-```
+- Replace `ZMQ_HOST` with URL of a node with ZMQ enabled.
+- Replace `IRI_NODE` with URL of a node running IRI.
 
-To auto-reattach/promote all unconfirmed transactions
+``` shell
+docker-compose up -d 
 ```
-yarn index.js --all
-```
-
-To auto-reattach/promote only failed transactions
-```
-yarn index.js --f
-```
-
-#### Note: All paths are for files are defined in `config.js`
