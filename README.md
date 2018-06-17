@@ -9,6 +9,8 @@ Reads ZMQ feed from a full node, store all unconfirmed transactions and promotes
 
 ### Getting started
 
+In `docker-compose.yaml`
+
 - Replace `ZMQ_HOST` with URL of a node with ZMQ enabled.
 - Replace `IRI_NODE` with URL of a node running IRI.
 
