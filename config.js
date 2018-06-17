@@ -1,8 +1,4 @@
 module.exports = {
-  NODES: [
-    'http://localhost:14265'
-  ],
-  UNCONFIMED_BUNDLES_PATH: './bundles.list',
-  FAILED_REATTACHS_PATH: './failed.list',
-  CONFIRMED_PATH: './confirmed.list',
+  IRI_HOST: process.env.IRI_HOST || 'http://localhost:14265',
+  ZMQ_HOST: process.env.ZMQ_HOST || 'tcp://localhost:5556',
 };
