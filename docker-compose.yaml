@@ -10,6 +10,15 @@ services:
     environment:
       - ZMQ_HOST=tcp://iota-node.eastus.cloudapp.azure.com:5556
       - IRI_HOST=http://iota-node.eastus.cloudapp.azure.com
+  web:
+      build:
+        context: .
+      command: [ "node", "./src/app.js" ]
+      volumes:
+        - ./storage:/app/storage
+      environment:
+        - ZMQ_HOST=tcp://iota-node.eastus.cloudapp.azure.com:5556
+        - IRI_HOST=http://iota-node.eastus.cloudapp.azure.com
   iota_promoter:
       build:
         context: .
