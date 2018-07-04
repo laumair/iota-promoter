@@ -8,8 +8,8 @@ services:
     volumes:
       - ./storage:/app/storage
     environment:
-      - ZMQ_HOST=tcp://localhost:5556
-      - IRI_HOST=http://localhost:14265
+      - ZMQ_HOST=tcp://iota-node.eastus.cloudapp.azure.com:5556
+      - IRI_HOST=http://iota-node.eastus.cloudapp.azure.com
   iota_promoter:
       build:
         context: .
@@ -17,5 +17,16 @@ services:
       volumes:
         - ./storage:/app/storage
       environment:
-        - ZMQ_HOST=tcp://localhost:5556
-        - IRI_HOST=http://localhost:14265
+        - ZMQ_HOST=tcp://iota-node.eastus.cloudapp.azure.com
+        - IRI_HOST=http://iota-node.eastus.cloudapp.azure.com
+  mongodb:
+      image: mongo:latest
+      environment:
+        - MONGO_DATA_DIR=/data/db
+        - MONGO_LOG_DIR=/dev/null
+        - MONGODB_DATABASE=tanglr
+      volumes:
+        - ./data/db:/data/db
+      ports:
+          - 27017:27017
+      command: mongod --smallfiles --logpath=/dev/null

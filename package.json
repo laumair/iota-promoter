@@ -8,10 +8,18 @@
     "lint": "./node_modules/.bin/eslint --ext .js ."
   },
   "dependencies": {
+    "axios": "^0.18.0",
     "chalk": "^2.3.0",
+    "cors": "^2.8.4",
     "curl.lib.js": "^1.0.22",
-    "iota.lib.js": "^0.4.6",
+    "express": "^4.16.3",
+    "iota.lib.js": "git+https://git@github.com/iotaledger/iota.lib.js#develop",
+    "lodash": "^4.17.10",
+    "mongoose": "^5.1.7",
+    "nedb": "^1.8.0",
     "pify": "^3.0.0",
+    "socket.io": "^2.1.1",
+    "socket.io-client": "^2.1.1",
     "zeromq": "^4.6.0"
   },
   "devDependencies": {
