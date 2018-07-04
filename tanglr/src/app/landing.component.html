@@ -1,0 +1,50 @@
+  <main class="main">
+    <div class="main-content-container">
+      <div class="main-info">
+        <p>Enqueues all live value transactions from the tangle and automatically promotes them till they get confirmed.
+          In case your transaction is not in the queue for promotion, you can add it by pasting your bundle hash below</p>
+      </div>
+      <form class="main-search-form" #f="ngForm" (ngSubmit)="add(f.value)">
+        <input [(ngModel)]="requestedBundleHash" name="requestedBundleHash" class="main-input-field" type="text" placeholder="Enter bundle hash" />
+        <button type="submit" class="main-search-button">
+          <app-spinner-circle *ngIf="isSubmittingForPromotion" [fontSize]="'14px'"></app-spinner-circle>
+          <span *ngIf="!isSubmittingForPromotion">Submit</span>
+        </button>
+      </form>
+      <div class="response">{{ submissionFeedback }}</div>
+      <div class="main-content-wrapper">
+        <h3 class="main-content-heading">
+          Enqueued Transactions for promotion
+        </h3>
+        <app-async [waitFor]="hasFetchedBundles">
+          <div class="main-content">
+            <table class="table" *ngIf="bundles.length">
+              <thead class="table-head">
+              <tr>
+                <th>Bundle Hash</th>
+                <th>Promotions</th>
+                <th>Received At</th>
+              </tr>
+              </thead>
+              <tbody class="table-body">
+              <tr *ngFor="let meta of bundles">
+                <td class="table-data">
+                  <app-link
+                    [children]="meta.bundle"
+                    (to)="navigate($event)"
+                  >
+                  </app-link>
+                </td>
+                <td class="table-data">{{ meta.promotionCount }}</td>
+                <td class="table-data">{{ meta.receivedAt | date:'medium' }}</td>
+              </tr>
+              </tbody>
+            </table>
+            <p class="no-content-description" *ngIf="!bundles.length">
+              {{ bundlesFetchResponseFeedback }}
+            </p>
+          </div>
+        </app-async>
+      </div>
+    </div>
+  </main>
